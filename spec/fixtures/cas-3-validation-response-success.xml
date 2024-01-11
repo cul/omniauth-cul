@@ -1,0 +1,35 @@
+<cas:serviceResponse xmlns:cas='http://www.yale.edu/tp/cas'>
+ <cas:authenticationSuccess>
+  <cas:user>zzz1234</cas:user>
+  <cas:attributes>
+    <cas:isFromNewLogin>false</cas:isFromNewLogin>
+    <cas:bypassMultifactorAuthentication>false</cas:bypassMultifactorAuthentication>
+    <cas:authenticationDate>2024-01-11T00:22:37.141-05:00[US/Eastern]</cas:authenticationDate>
+    <cas:authnContextClass>mfa-duo</cas:authnContextClass>
+    <cas:successfulAuthenticationHandlers>JaasAuthenticationHandler</cas:successfulAuthenticationHandlers>
+    <cas:successfulAuthenticationHandlers>mfa-duo</cas:successfulAuthenticationHandlers>
+    <cas:lastPasswordChangeDate>Thu Jan 11 00:08:17 EST 2024</cas:lastPasswordChangeDate>
+    <cas:lastPasswordChangeDate>Thu Jan 11 00:08:17 EST 2024</cas:lastPasswordChangeDate>
+    <cas:samlAuthenticationStatementAuthMethod>urn:oasis:names:tc:SAML:1.0:am:password</cas:samlAuthenticationStatementAuthMethod>
+    <cas:samlAuthenticationStatementAuthMethod>urn:oasis:names:tc:SAML:1.0:am:unspecified</cas:samlAuthenticationStatementAuthMethod>
+    <cas:credentialType>UsernamePasswordCredential</cas:credentialType>
+    <cas:credentialType>DuoCredential</cas:credentialType>
+    <cas:affiliation>CUNIX_swift</cas:affiliation>
+    <cas:affiliation>CUL_allstaff</cas:affiliation>
+    <cas:affiliation>CUL_dlst</cas:affiliation>
+    <cas:affiliation>CNETrestricted</cas:affiliation>
+    <cas:affiliation>CUNIX_ldpd</cas:affiliation>
+    <cas:affiliation>CUNIX_ldpddev</cas:affiliation>
+    <cas:affiliation>CUNIX_cul</cas:affiliation>
+    <cas:affiliation>CUNIX_ldpdserv</cas:affiliation>
+    <cas:affiliation>CUL_dpts-ldpd</cas:affiliation>
+    <cas:affiliation>LIB_allstaff</cas:affiliation>
+    <cas:affiliation>CUL_dpts-dev</cas:affiliation>
+    <cas:affiliation>CUstaff</cas:affiliation>
+    <cas:authenticationMethod>JaasAuthenticationHandler</cas:authenticationMethod>
+    <cas:authenticationMethod>mfa-duo</cas:authenticationMethod>
+    <cas:longTermAuthenticationRequestTokenUsed>false</cas:longTermAuthenticationRequestTokenUsed>
+    <cas:username>zzz1234</cas:username>
+  </cas:attributes>
+ </cas:authenticationSuccess>
+</cas:serviceResponse>
