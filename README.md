@@ -2,6 +2,8 @@
 
 Cul::Omniauth is a gem that facilitates using Rails, [Devise](https://github.com/plataformatec/devise "Devise") and Omniauth with the [CAS offering from Columbia University IT](https://cuit.columbia.edu/cas-authentication "CUIT CAS Documentation").
 
+At this time, this gem only supports Columbia University's CAS3 authentication endpoint (which provides user affiliation information), but support for additional auth mechanisms may be added later if needed.
+
 ## Installation and setup
 
 The instructions below assume that your Rails application's user model will be called "User".
