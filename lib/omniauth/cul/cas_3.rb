@@ -18,10 +18,10 @@ module Omniauth
         # We are always expecting an XML response
         response_xml = Nokogiri::XML(validation_response)
 
-        uni = uni_from_response_xml(response_xml)
+        user_id = user_id_from_response_xml(response_xml)
         affils = affils_from_response_xml(response_xml)
 
-        [uni, affils]
+        [user_id, affils]
       end
 
       def self.cas_validation_url(app_cas_callback_endpoint, cas_ticket)
@@ -40,7 +40,7 @@ module Omniauth
         response.body
       end
 
-      def self.uni_from_response_xml(response_xml)
+      def self.user_id_from_response_xml(response_xml)
         response_xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:user', 'cas' => 'http://www.yale.edu/tp/cas')&.first&.text
       end
 
