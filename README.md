@@ -16,56 +16,66 @@ The instructions below assume that your Rails application's user model will be c
 3. Add gem `omniauth` (>= 2.1) to your Gemfile.
 4. Add this gem, 'omniauth-cul', to your Gemfile.
 5. Run `bundle install`.
-6. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
-7. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).  Add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
-8. In `/config/routes.rb`, find this line:
+6. In `/config/initializers/devise.rb`, add this:
+   ```
+   config.omniauth :cas, strategy_class: Omniauth::Cul::Strategies::Cas3Strategy
+   ```
+   (There may already be a config.omniauth section, and if so you can append this to the existing lines in that section.)
+7. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
+8. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).
+   - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
+   - In most cases though, you'll probably want to disable most of the modules and have only this:
+      ```
+      devise :database_authenticatable, :omniauthable, omniauth_providers: [:cas]
+      ```
+9.  In `/config/routes.rb`, find this line:
    ```
     devise_for :users
    ```
-   And replace it with this:
+   And replace it with these lines:
    ```
     devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
    ```
-9.  Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content:
-   ```
-   require 'omniauth/cul'
+10. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content:
+    ```
+    require 'omniauth/cul'
 
-    class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-      # Adding the line below so that if the auth endpoint POSTs to our cas endpoint, it won't
-      # be rejected by authenticity token verification.
-      # See https://github.com/omniauth/omniauth/wiki/FAQ#rails-session-is-clobbered-after-callback-on-developer-strategy
-      skip_before_action :verify_authenticity_token, only: :cas
+      class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+        # Adding the line below so that if the auth endpoint POSTs to our cas endpoint, it won't
+        # be rejected by authenticity token verification.
+        # See https://github.com/omniauth/omniauth/wiki/FAQ#rails-session-is-clobbered-after-callback-on-developer-strategy
+        skip_before_action :verify_authenticity_token, only: :cas
 
-      def app_cas_callback_endpoint
-        "#{request.base_url}/users/auth/cas/callback"
+        def app_cas_callback_endpoint
+          "#{request.base_url}/users/auth/cas/callback"
+        end
+
+        # GET /users/auth/cas (go here to be redirected to the CAS login form)
+        def passthru
+          redirect_to Omniauth::Cul::Cas3.passthru_redirect_url(app_cas_callback_endpoint), allow_other_host: true
+        end
+
+        # GET /users/auth/cas/callback
+        def cas
+          user_id, affils = Omniauth::Cul::Cas3.validation_callback(request.params['ticket'], app_cas_callback_endpoint)
+
+          # Custom auth logic for your app goes here.
+          # The code below is provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
+          # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
+          #
+          # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
+          #   user = User.find_by(uid: user_id) || User.create!(
+          #       uid: user_id,
+          #       email: "#{user_id}@columbia.edu"
+          #   )
+          #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
+          # else
+          #   flash[:error] = 'Login attempt failed'
+          #   redirect_to root_path
+          # end
+        end
       end
-
-      # GET /users/auth/cas (go here to be redirected to the CAS login form)
-      def passthru
-        redirect_to Omniauth::Cul::Cas3.passthru_redirect_url(app_cas_callback_endpoint), allow_other_host: true
-      end
-
-      # GET /users/auth/cas/callback
-      def cas
-        user_id, affils = Omniauth::Cul::Cas3.validation_callback(request.params['ticket'], app_cas_callback_endpoint)
-
-        # Custom auth logic for your app goes here.
-        # The code below is provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
-        # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
-        #
-        # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
-        #   user = User.find_by(uid: user_id) || User.create!(
-        #       uid: user_id,
-        #       email: "#{user_id}@columbia.edu"
-        #   )
-        #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
-        # else
-        #   flash[:error] = 'Login attempt failed'
-        #   redirect_to root_path
-        # end
-      end
-    end
-   ```
+    ```
 
 ## Omniauth::Cul::PermissionFileValidator - Permission validation with a user id list or affiliation list
 
