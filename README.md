@@ -16,8 +16,9 @@ The instructions below assume that your Rails application's user model will be c
 3. Add gem `omniauth` (>= 2.1) to your Gemfile.
 4. Add this gem, 'omniauth-cul', to your Gemfile.
 5. Run `bundle install`.
-6. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).  Add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
-7. In `/config/routes.rb`, find this line:
+6. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
+7. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).  Add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
+8. In `/config/routes.rb`, find this line:
    ```
     devise_for :users
    ```
@@ -25,7 +26,7 @@ The instructions below assume that your Rails application's user model will be c
    ```
     devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
    ```
-8. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content:
+9.  Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content:
    ```
    require 'omniauth/cul'
 
