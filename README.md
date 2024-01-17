@@ -26,7 +26,7 @@ The instructions below assume that your Rails application's user model will be c
    - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
    - In most cases though, you'll probably want to disable most of the modules and have only this:
       ```
-      devise :database_authenticatable, :omniauthable, omniauth_providers: [:cas]
+      devise :database_authenticatable, :validatable, :omniauthable, omniauth_providers: [:cas]
       ```
 9.  In `/config/routes.rb`, find this line:
    ```
