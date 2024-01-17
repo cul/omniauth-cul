@@ -66,7 +66,8 @@ The instructions below assume that your Rails application's user model will be c
           # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
           #   user = User.find_by(uid: user_id) || User.create!(
           #       uid: user_id,
-          #       email: "#{user_id}@columbia.edu"
+          #       email: "#{user_id}@columbia.edu",
+          #       password: Devise.friendly_token[0, 20] # Assign random string password, since the omniauth user doesn't need to know the unused local account password
           #   )
           #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
           # else
