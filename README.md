@@ -8,13 +8,13 @@ At this time, this gem only supports Columbia University's CAS3 authentication e
 
 The instructions below assume that your Rails application's user model will be called "User".
 
-1. Add gem `devise` (>= 4.9) to your Gemfile.
+1. Add gem `devise` (~> 4.9) to your Gemfile. (This gem has only been tested with Devise 4.x.)
 2. Follow the standard Devise setup instructions (https://github.com/heartcombo/devise).  Recap:
    1. `rails generate devise:install`
    2. `rails generate devise User`
    3. `rails db:migrate`
-3. Add gem `omniauth` (>= 2.1) to your Gemfile.
-4. Add this gem, 'omniauth-cul', to your Gemfile.
+3. Add gem `omniauth` (~> 2.1) to your Gemfile.
+4. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
 5. Run `bundle install`.
 6. In `/config/initializers/devise.rb`, add this:
    ```
