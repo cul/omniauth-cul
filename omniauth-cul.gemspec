@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary = 'A devise omniauth adapter for Rails apps, using Columbia University authentication.'
   spec.homepage = 'https://github.com/cul/omniauth-cul'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 2.7.5'
+  spec.required_ruby_version = '>= 3.1.0'
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
 
