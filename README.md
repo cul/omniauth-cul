@@ -16,66 +16,80 @@ The instructions below assume that your Rails application's user model will be c
 3. Add gem `omniauth` (~> 2.1) to your Gemfile.
 4. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
 5. Run `bundle install`.
-6. In `/config/initializers/devise.rb`, add this:
+6. This gem offers two Omniauth providers:
+   - `:columbia_cas` - For logging in with a Columbia UNI
+   - `:developer_uid` - For logging in as a user with a specific uid (IMPORTANT: only enable this in a development environment!)
+
+   To enable one or both of these providers, edit `/config/initializers/devise.rb` and add one or both of these lines:
    ```
-   config.omniauth :cas, strategy_class: Omniauth::Cul::Strategies::Cas3Strategy
+   config.omniauth :columbia_cas, { label: 'Columbia SSO (CAS)' }
+   config.omniauth :developer_uid, { label: 'Developer UID' } if Rails.env.development?
    ```
-   (There may already be a config.omniauth section, and if so you can append this to the existing lines in that section.)
+   (NOTE: You may already have other config.omniauth entries in your devise.rb file. If so, you can append the lines above to that section.)
 7. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
 8. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).
-   - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: [:cas]`
-   - In most cases though, you'll probably want to disable most of the modules and have only this:
+   - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: Devise.omniauth_configs.keys`
+     - NOTE: We're using `Devise.omniauth_configs.keys` so that we automatically reference all of the config.omniauth providers enabled in `devise.rb`.  If you enabled the `:columbia_cas` and `:developer_uid` providers, then `Devise.omniauth_configs.keys` will return `[:columbia_cas, :developer_uid]`.
+   - You'll also need to add the `:database_authenticatable` option if it's not already present.
+   - The `:validatable` option is usually something that you'll want too.
+   - Here's an example configuration:
       ```
-      devise :database_authenticatable, :validatable, :omniauthable, omniauth_providers: [:cas]
+      devise :database_authenticatable, :validatable,
+      :omniauthable, omniauth_providers: Devise.omniauth_configs.keys
       ```
 9.  In `/config/routes.rb`, find this line:
    ```
     devise_for :users
    ```
-   And replace it with these lines:
+   And replace it with this:
    ```
     devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
    ```
-10. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content:
+10. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content (and then customize it based on your needs):
     ```
     require 'omniauth/cul'
 
-      class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
-        # Adding the line below so that if the auth endpoint POSTs to our cas endpoint, it won't
-        # be rejected by authenticity token verification.
-        # See https://github.com/omniauth/omniauth/wiki/FAQ#rails-session-is-clobbered-after-callback-on-developer-strategy
-        skip_before_action :verify_authenticity_token, only: :cas
+    class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+      # See https://github.com/omniauth/omniauth/wiki/FAQ#rails-session-is-clobbered-after-callback-on-developer-strategy
+      # The CAS login redirect to the columbia_cas callback endpoint AND the developer form submission to the
+      # developer_uid callback do not send authenticity tokens, so we'll skip token verification for these actions.
+      skip_before_action :verify_authenticity_token, only: [:columbia_cas, :developer_uid]
 
-        def app_cas_callback_endpoint
-          "#{request.base_url}/users/auth/cas/callback"
-        end
+      # POST /users/auth/developer_uid/callback
+      def developer_uid
+        return unless Rails.env.development? # Only allow this action to run in the development environment
+        uid = params[:uid]
+        user = User.find_by(uid: uid)
 
-        # GET /users/auth/cas (go here to be redirected to the CAS login form)
-        def passthru
-          redirect_to Omniauth::Cul::Cas3.passthru_redirect_url(app_cas_callback_endpoint), allow_other_host: true
-        end
-
-        # GET /users/auth/cas/callback
-        def cas
-          user_id, affils = Omniauth::Cul::Cas3.validation_callback(request.params['ticket'], app_cas_callback_endpoint)
-
-          # Custom auth logic for your app goes here.
-          # The code below is provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
-          # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
-          #
-          # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
-          #   user = User.find_by(uid: user_id) || User.create!(
-          #       uid: user_id,
-          #       email: "#{user_id}@columbia.edu",
-          #       password: Devise.friendly_token[0, 20] # Assign random string password, since the omniauth user doesn't need to know the unused local account password
-          #   )
-          #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
-          # else
-          #   flash[:error] = 'Login attempt failed'
-          #   redirect_to root_path
-          # end
+        if !user
+          flash[:alert] = "Login attempt failed.  User #{uid} does not have an account."
+          redirect_to root_path
+          return
         end
       end
+
+      # POST /users/auth/columbia_cas/callback
+      def columbia_cas
+        callback_url = user_columbia_cas_omniauth_callback_url # The columbia_cas callback route in this application
+        uid, _affils = Omniauth::Cul::ColumbiaCas.validation_callback(request.params['ticket'], callback_url)
+
+        # Custom auth logic for your app goes here.
+        # The code below is provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
+        # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
+        #
+        # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
+        #   user = User.find_by(uid: user_id) || User.create!(
+        #       uid: user_id,
+        #       email: "#{user_id}@columbia.edu",
+        #       password: Devise.friendly_token[0, 20] # Assigning a random string password is fine, since Omniauth login doesn't make use of this local account password
+        #   )
+        #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
+        # else
+        #   flash[:alert] = 'Login attempt failed'
+        #   redirect_to root_path
+        # end
+      end
+    end
     ```
 
 ## Omniauth::Cul::PermissionFileValidator - Permission validation with a user id list or affiliation list
