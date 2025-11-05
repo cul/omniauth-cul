@@ -1,4 +1,6 @@
-require "omniauth"
+# frozen_string_literal: true
+
+require 'omniauth'
 
 module Omniauth
   module Strategies
@@ -11,15 +13,15 @@ module Omniauth
       # :mystrategy by default, unless we set `option :name, :my_strategy`.
       #  You can see the original Omniauth implementation here:
       # https://github.com/omniauth/omniauth/blob/v2.1.4/lib/omniauth/strategy.rb#L139
-      option :name, Omniauth::Cul::CaseConverter.to_snake_case(name.split("::").last).to_sym
+      option :name, Omniauth::Cul::CaseConverter.to_snake_case(name.split('::').last).to_sym
 
       option :fields, [:uid]
       option :uid_field, :uid
 
       def request_phase
-        form = OmniAuth::Form.new(title: "Developer Sign-In", url: callback_path)
-        form.text_field "UID", "uid"
-        form.button "Sign In"
+        form = OmniAuth::Form.new(title: 'Developer Sign-In', url: callback_path)
+        form.text_field 'UID', 'uid'
+        form.button 'Sign In'
         form.to_response
       end
     end

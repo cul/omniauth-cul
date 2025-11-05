@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "nokogiri"
-require "net/http"
+require 'nokogiri'
+require 'net/http'
 
 module Omniauth
   module Cul
@@ -22,14 +22,14 @@ module Omniauth
         if user_id.nil?
           Rails.logger.error("Cas3 validation failed with validation response:\n#{response_xml}") if defined?(Rails)
           raise Omniauth::Cul::Exceptions::CasTicketValidationError,
-                "Invalid CAS ticket"
+                'Invalid CAS ticket'
         end
 
         [user_id, affils]
       end
 
       def self.cas_validation_url(app_cas_callback_endpoint, cas_ticket)
-        "https://cas.columbia.edu/cas/p3/serviceValidate?"\
+        'https://cas.columbia.edu/cas/p3/serviceValidate?'\
         "service=#{Rack::Utils.escape(app_cas_callback_endpoint)}&"\
         "ticket=#{cas_ticket}"
       end
@@ -47,20 +47,20 @@ module Omniauth
       def self.user_id_from_response_xml(response_xml)
         unless response_xml.is_a?(Nokogiri::XML::Document)
           raise ArgumentError,
-                "response_xml must be a Nokogiri::XML::Document"
+                'response_xml must be a Nokogiri::XML::Document'
         end
 
-        response_xml.xpath("/cas:serviceResponse/cas:authenticationSuccess/cas:user", "cas" => "http://www.yale.edu/tp/cas")&.first&.text
+        response_xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:user', 'cas' => 'http://www.yale.edu/tp/cas')&.first&.text
       end
 
       def self.affils_from_response_xml(response_xml)
         puts response_xml.class.name.inspect
         unless response_xml.is_a?(Nokogiri::XML::Document)
           raise ArgumentError,
-                "response_xml must be a Nokogiri::XML::Document"
+                'response_xml must be a Nokogiri::XML::Document'
         end
 
-        response_xml.xpath("/cas:serviceResponse/cas:authenticationSuccess/cas:attributes/cas:affiliation", "cas" => "http://www.yale.edu/tp/cas")&.map(&:text)
+        response_xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:attributes/cas:affiliation', 'cas' => 'http://www.yale.edu/tp/cas')&.map(&:text)
       end
     end
   end

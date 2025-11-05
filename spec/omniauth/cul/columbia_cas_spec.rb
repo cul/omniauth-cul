@@ -2,7 +2,7 @@
 
 RSpec.describe Omniauth::Cul::ColumbiaCas do
   let(:cas_3_validation_response_success_xml_string) do
-    fixture("cas-3-validation-response-success.xml").read
+    fixture('cas-3-validation-response-success.xml').read
   end
 
   let(:cas_3_validation_response_success_xml_object) do
@@ -10,14 +10,14 @@ RSpec.describe Omniauth::Cul::ColumbiaCas do
   end
 
   let(:cas_3_validation_response_failure_xml_string) do
-    fixture("cas-3-validation-response-failure.xml").read
+    fixture('cas-3-validation-response-failure.xml').read
   end
 
   let(:cas_3_validation_response_failure_xml_object) do
     Nokogiri::XML(cas_3_validation_response_failure_xml_string)
   end
 
-  let(:expected_user_id) { "zzz1234" }
+  let(:expected_user_id) { 'zzz1234' }
 
   let(:expected_affils) do
     %w[
@@ -36,17 +36,17 @@ RSpec.describe Omniauth::Cul::ColumbiaCas do
     ]
   end
 
-  let(:app_cas_callback_endpoint) { "https://example.com/cas_callback_url" }
+  let(:app_cas_callback_endpoint) { 'https://example.com/cas_callback_url' }
   let(:url_encoded_app_cas_callback_endpoint) { Rack::Utils.escape(app_cas_callback_endpoint) }
-  let(:ticket) { "abc-123-def-456" }
+  let(:ticket) { 'abc-123-def-456' }
 
-  describe ".validation_callback" do
-    context "when validation is successful" do
+  describe '.validation_callback' do
+    context 'when validation is successful' do
       before do
         allow(described_class).to receive(:validate).and_return(cas_3_validation_response_success_xml_string)
       end
 
-      it "returns the expected user_id and affils" do
+      it 'returns the expected user_id and affils' do
         expect(
           described_class.validation_callback(app_cas_callback_endpoint, ticket)
         ).to eq(
@@ -58,32 +58,32 @@ RSpec.describe Omniauth::Cul::ColumbiaCas do
       end
     end
 
-    context "when validation fails" do
+    context 'when validation fails' do
       before do
         allow(described_class).to receive(:validate).and_return(cas_3_validation_response_failure_xml_string)
       end
 
-      it "raises an exception" do
-        expect do
+      it 'raises an exception' do
+        expect {
           described_class.validation_callback(app_cas_callback_endpoint, ticket)
-        end.to raise_error(Omniauth::Cul::Exceptions::CasTicketValidationError)
+        }.to raise_error(Omniauth::Cul::Exceptions::CasTicketValidationError)
       end
     end
   end
 
-  describe ".cas_validation_url" do
-    it "generates the correct url string" do
+  describe '.cas_validation_url' do
+    it 'generates the correct url string' do
       expect(
         described_class.cas_validation_url(app_cas_callback_endpoint, ticket)
       ).to eq(
-        "https://cas.columbia.edu/cas/p3/serviceValidate?"\
+        'https://cas.columbia.edu/cas/p3/serviceValidate?'\
         "service=#{url_encoded_app_cas_callback_endpoint}&"\
         "ticket=#{ticket}"
       )
     end
   end
 
-  describe ".validate" do
+  describe '.validate' do
     let(:validation_url) { described_class.cas_validation_url(app_cas_callback_endpoint, ticket) }
     let(:expected_successful_response_body) { cas_3_validation_response_success_xml_string }
     let(:net_http_object) do
@@ -99,35 +99,35 @@ RSpec.describe Omniauth::Cul::ColumbiaCas do
       allow(Net::HTTP).to receive(:new).and_return(net_http_object)
     end
 
-    it "returns the expected user_id and affils" do
+    it 'returns the expected user_id and affils' do
       expect(
         described_class.validate(validation_url)
       ).to eq(expected_successful_response_body)
     end
   end
 
-  describe ".user_id_from_response_xml" do
-    it "extracts the expected user id from a successful response" do
+  describe '.user_id_from_response_xml' do
+    it 'extracts the expected user id from a successful response' do
       expect(described_class.user_id_from_response_xml(cas_3_validation_response_success_xml_object)).to eq(
         expected_user_id
       )
     end
 
-    it "returns nil for a failure response" do
+    it 'returns nil for a failure response' do
       expect(described_class.user_id_from_response_xml(cas_3_validation_response_failure_xml_object)).to eq(
         nil
       )
     end
   end
 
-  describe ".affils_from_response_xml" do
-    it "extracts the expected affiliations from a successful response" do
+  describe '.affils_from_response_xml' do
+    it 'extracts the expected affiliations from a successful response' do
       expect(
         described_class.affils_from_response_xml(cas_3_validation_response_success_xml_object)
       ).to eq(expected_affils)
     end
 
-    it "returns an empty array for a failure response" do
+    it 'returns an empty array for a failure response' do
       expect(described_class.affils_from_response_xml(cas_3_validation_response_failure_xml_object)).to eq(
         []
       )

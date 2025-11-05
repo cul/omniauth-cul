@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Omniauth
   module Strategies
     class ColumbiaCas
@@ -9,7 +11,7 @@ module Omniauth
       # :mystrategy by default, unless we set `option :name, :my_strategy`.
       #  You can see the original Omniauth implementation here:
       # https://github.com/omniauth/omniauth/blob/v2.1.4/lib/omniauth/strategy.rb#L139
-      option :name, Omniauth::Cul::CaseConverter.to_snake_case(name.split("::").last).to_sym
+      option :name, Omniauth::Cul::CaseConverter.to_snake_case(name.split('::').last).to_sym
 
       def request_phase
         redirect "https://cas.columbia.edu/cas/login?service=#{Rack::Utils.escape(callback_url)}"
