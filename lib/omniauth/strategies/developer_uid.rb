@@ -18,8 +18,19 @@ module Omniauth
       option :fields, [:uid]
       option :uid_field, :uid
 
-      def request_phase
-        form = OmniAuth::Form.new(title: 'Developer Sign-In', url: callback_path)
+      def request_phase # rubocop:disable Metrics/MethodLength
+        form = OmniAuth::Form.new(
+          title: 'Developer Sign-In',
+          url: callback_path,
+          header_info: <<~FOCUSSCRIPT
+            <script>
+              document.addEventListener("DOMContentLoaded", (event) => {
+                // Automatically focus on the uid input element when the page loads
+                document.getElementById('uid').focus();
+              });
+            </script>
+          FOCUSSCRIPT
+        )
         form.text_field 'UID', 'uid'
         form.button 'Sign In'
         form.to_response
