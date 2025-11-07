@@ -66,6 +66,8 @@ The instructions below assume that your Rails application's user model will be c
           redirect_to root_path
           return
         end
+
+        sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
       end
 
       # POST /users/auth/columbia_cas/callback
