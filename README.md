@@ -84,14 +84,17 @@ The instructions below assume that your Rails application's user model will be c
         uid, _affils = Omniauth::Cul::ColumbiaCas.validation_callback(request.params['ticket'], callback_url)
 
         # Custom auth logic for your app goes here.
-        # The code below is provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
+        # The code below is only provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
         # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
         #
-        # if Omniauth::Cul::PermissionFileValidator.permitted?(user_id, affils)
-        #   user = User.find_by(uid: user_id) || User.create!(
-        #       uid: user_id,
-        #       email: "#{user_id}@columbia.edu",
-        #       password: Devise.friendly_token[0, 20] # Assigning a random string password is fine, since Omniauth login doesn't make use of this local account password
+        # if Omniauth::Cul::PermissionFileValidator.permitted?(uid, affils)
+        #   user = User.find_by(uid: uid) || User.create!(
+        #     uid: uid,
+        #     email: "#{uid}@columbia.edu",
+        #     # Only keep the line below if you're using the :database_authenticatable Devise module.
+        #     # Omniauth login doesn't use a password (so the password value doesn't matter to Omniauth),
+        #     # but your app's setup might require a password to be assigned to new users.
+        #     password: Devise.friendly_token[0, 20]
         #   )
         #   sign_in_and_redirect user, event: :authentication # this will throw if user is not activated
         # else
