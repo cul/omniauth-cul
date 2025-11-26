@@ -27,16 +27,24 @@ The instructions below assume that your Rails application's user model will be c
    ```
    (NOTE: You may already have other config.omniauth entries in your devise.rb file. If so, you can append the lines above to that section.)
 7. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
-8. In `/app/models/user.rb`, find the line where the `devise` method is called (usually with arguments like `:database_authenticatable`, `:registerable`, etc.).
-   - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: Devise.omniauth_configs.keys`
-     - NOTE: We're using `Devise.omniauth_configs.keys` so that we automatically reference all of the config.omniauth providers enabled in `devise.rb`.  If you enabled the `:columbia_cas` and `:developer_uid` providers, then `Devise.omniauth_configs.keys` will return `[:columbia_cas, :developer_uid]`.
-   - You'll also need to add the `:database_authenticatable` option if it's not already present.
-   - The `:validatable` option is usually something that you'll want too.
-   - Here's an example configuration:
+8. In `/app/models/user.rb`, find the line where the `devise` method is called.
+   - It might look something like this:
       ```
-      devise :database_authenticatable, :validatable,
-      :omniauthable, omniauth_providers: Devise.omniauth_configs.keys
+      devise :database_authenticatable, :validatable
       ```
+   - Minimally, you need to add these additional arguments to the end of the method call: `:omniauthable, omniauth_providers: Devise.omniauth_configs.keys`, so the updated code might look like this:
+     ```
+     devise :database_authenticatable, :validatable, :omniauthable, omniauth_providers: Devise.omniauth_configs.keys
+     ```
+     This is just an example though!  You might not need the `:database_authenticatable` and `:validatable` modules for your app.  See the [Devise documentation](https://github.com/heartcombo/devise) for more information about available modules and what they do.
+
+      It's worth mentioning here that if you use plan to use omniauth-cul gem for CAS authentication, you might not actually want to support password authentication in your app anymore.  If that's the case, you can remove the `:database_authenticatable` module (which enforces the presence of an `encrypted_password` field on your User model) and you can also remove the `:validatable` model (which, among other things, validates the presence of a password field when a new User is created).
+
+    - The simplest version of your devise configuration could look like this:
+      ```
+      devise :omniauthable, omniauth_providers: Devise.omniauth_configs.keys
+      ```
+      Why does `:omniauth_providers` configuration has a value of `Devise.omniauth_configs.keys`?  This serves the purpose of automatically referencing any config.omniauth providers that you previously enabled in `devise.rb`.  For example, if you enabled `:columbia_cas` and `:developer_uid` providers in `devise.rb`, then `Devise.omniauth_configs.keys` would return `[:columbia_cas, :developer_uid]`.
 9.  In `/config/routes.rb`, find this line:
    ```
     devise_for :users
@@ -67,7 +75,7 @@ The instructions below assume that your Rails application's user model will be c
           return
         end
 
-        sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
+        sign_in_and_redirect user, event: :authentication # this will throw if user is not activated
       end
 
       # POST /users/auth/columbia_cas/callback
@@ -85,7 +93,7 @@ The instructions below assume that your Rails application's user model will be c
         #       email: "#{user_id}@columbia.edu",
         #       password: Devise.friendly_token[0, 20] # Assigning a random string password is fine, since Omniauth login doesn't make use of this local account password
         #   )
-        #   sign_in_and_redirect user, event: :authentication # this will throw if @user is not activated
+        #   sign_in_and_redirect user, event: :authentication # this will throw if user is not activated
         # else
         #   flash[:alert] = 'Login attempt failed'
         #   redirect_to root_path
@@ -93,6 +101,7 @@ The instructions below assume that your Rails application's user model will be c
       end
     end
     ```
+  11. The last thing to note is that you must POST to any /users/auth/:provider paths when your users log in via Omniauth.  For security reasons in Omniauth 2.0 and later, use of GET is discouraged and will not work for the Omniauth strategies provided by this gem.  In the past, if you used the Rails `link_to` method to generate links to `/users/auth/:provider`, you should instead use `button_to` because it will generate a `<form method="post">` tag that will perform a POST request to your `/users/auth/:provider` URLs.  If you attempt a GET request, you'll most likely get an error message that says something like "Not found. Authentication passthru."
 
 ## Omniauth::Cul::PermissionFileValidator - Permission validation with a user id list or affiliation list
 
