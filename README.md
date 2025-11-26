@@ -87,7 +87,7 @@ The instructions below assume that your Rails application's user model will be c
         # The code below is only provided as an example.  If you want to use Omniauth::Cul::PermissionFileValidator,
         # to validate see the later "Omniauth::Cul::PermissionFileValidator" section of this README.
         #
-        # if Omniauth::Cul::PermissionFileValidator.permitted?(uid, affils)
+        # if Omniauth::Cul::PermissionFileValidator.permitted?(uid, _affils)
         #   user = User.find_by(uid: uid) || User.create!(
         #     uid: uid,
         #     email: "#{uid}@columbia.edu",
@@ -101,6 +101,14 @@ The instructions below assume that your Rails application's user model will be c
         #   flash[:alert] = 'Login attempt failed'
         #   redirect_to root_path
         # end
+      rescue Omniauth::Cul::Exceptions::Error => e
+        # If an unexpected CAS ticket validation occurs, log the error message and ask the user to try
+        # logging in again.  Do not display the exception object's original message to the user because it may
+        # contain information that only a developer should see.
+        error_message = 'CAS login validation failed.  Please try again.'
+        Rails.logger.debug(error_message + "  #{e.class.name}: #{e.message}")
+        flash[:alert] = error_message
+        redirect_to root_path
       end
     end
     ```
