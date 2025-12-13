@@ -54,7 +54,6 @@ module Omniauth
       end
 
       def self.affils_from_response_xml(response_xml)
-        puts response_xml.class.name.inspect
         unless response_xml.is_a?(Nokogiri::XML::Document)
           raise ArgumentError,
                 'response_xml must be a Nokogiri::XML::Document'
