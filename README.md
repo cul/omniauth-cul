@@ -14,9 +14,10 @@ The instructions below assume that your Rails application's user model will be c
    2. `rails generate devise User`
    3. `rails db:migrate`
 3. Add gem `omniauth` (~> 2.1) to your Gemfile.
-4. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
-5. Run `bundle install`.
-6. This gem offers two Omniauth providers:
+4. Add the gem `omniauth-rails_csrf_protection` to your Gemfile ('~> 2.0').
+5. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
+6. Run `bundle install`.
+7. This gem offers two Omniauth providers:
    - `:columbia_cas` - For logging in with a Columbia UNI
    - `:developer_uid` - For logging in as a user with a specific uid (IMPORTANT: only enable this in a development environment!)
 
@@ -26,8 +27,8 @@ The instructions below assume that your Rails application's user model will be c
    config.omniauth :developer_uid, { label: 'Developer UID' } if Rails.env.development?
    ```
    (NOTE: You may already have other config.omniauth entries in your devise.rb file. If so, you can append the lines above to that section.)
-7. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
-8. In `/app/models/user.rb`, find the line where the `devise` method is called.
+8. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
+9. In `/app/models/user.rb`, find the line where the `devise` method is called.
    - It might look something like this:
       ```
       devise :database_authenticatable, :validatable
@@ -45,7 +46,7 @@ The instructions below assume that your Rails application's user model will be c
       devise :omniauthable, omniauth_providers: Devise.omniauth_configs.keys
       ```
       Why does `:omniauth_providers` configuration has a value of `Devise.omniauth_configs.keys`?  This serves the purpose of automatically referencing any config.omniauth providers that you previously enabled in `devise.rb`.  For example, if you enabled `:columbia_cas` and `:developer_uid` providers in `devise.rb`, then `Devise.omniauth_configs.keys` would return `[:columbia_cas, :developer_uid]`.
-9.  In `/config/routes.rb`, find this line:
+10. In `/config/routes.rb`, find this line:
    ```
     devise_for :users
    ```
@@ -53,7 +54,7 @@ The instructions below assume that your Rails application's user model will be c
    ```
     devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
    ```
-10. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content (and then customize it based on your needs):
+11. Create a new file at `app/controllers/users/omniauth_callbacks_controller.rb` with the following content (and then customize it based on your needs):
     ```
     require 'omniauth/cul'
 
@@ -112,7 +113,7 @@ The instructions below assume that your Rails application's user model will be c
       end
     end
     ```
-  11. The last thing to note is that you must POST to any /users/auth/:provider paths when your users log in via Omniauth.  For security reasons in Omniauth 2.0 and later, use of GET is discouraged and will not work for the Omniauth strategies provided by this gem.  In the past, if you used the Rails `link_to` method to generate links to `/users/auth/:provider`, you should instead use `button_to` because it will generate a `<form method="post">` tag that will perform a POST request to your `/users/auth/:provider` URLs.  If you attempt a GET request, you'll most likely get an error message that says something like "Not found. Authentication passthru."
+  12. The last thing to note is that you must POST to any /users/auth/:provider paths when your users log in via Omniauth.  For security reasons in Omniauth 2.0 and later, use of GET is discouraged and will not work for the Omniauth strategies provided by this gem.  In the past, if you used the Rails `link_to` method to generate links to `/users/auth/:provider`, you should instead use `button_to` because it will generate a `<form method="post">` tag that will perform a POST request to your `/users/auth/:provider` URLs.  If you attempt a GET request, you'll most likely get an error message that says something like "Not found. Authentication passthru."
 
 ## Omniauth::Cul::PermissionFileValidator - Permission validation with a user id list or affiliation list
 
