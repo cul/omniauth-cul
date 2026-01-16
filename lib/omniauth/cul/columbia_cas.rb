@@ -1,25 +1,29 @@
 # frozen_string_literal: true
 
+require 'nokogiri'
+require 'net/http'
+
 module Omniauth
   module Cul
-    module Cas3
-      # For Columbia CAS 3 endpoint info, see: https://www.cuit.columbia.edu/cas-authentication
-
-      def self.passthru_redirect_url(app_cas_callback_endpoint)
-        'https://cas.columbia.edu/cas/login?'\
-        "service=#{Rack::Utils.escape(app_cas_callback_endpoint)}"
-      end
-
+    # This module is built around the Columbia University CAS 3 endpoint.
+    # For more information about this endpoint, see: https://www.cuit.columbia.edu/cas-authentication
+    module ColumbiaCas
       def self.validation_callback(ticket, app_cas_callback_endpoint)
         cas_ticket = ticket
         validation_url = cas_validation_url(app_cas_callback_endpoint, cas_ticket)
-        validation_response = validate_ticket(validation_url, cas_ticket)
+        validation_response = validate(validation_url)
 
         # We are always expecting an XML response
         response_xml = Nokogiri::XML(validation_response)
 
         user_id = user_id_from_response_xml(response_xml)
         affils = affils_from_response_xml(response_xml)
+
+        if user_id.nil?
+          Rails.logger.error("Cas3 validation failed with validation response:\n#{response_xml}") if defined?(Rails)
+          raise Omniauth::Cul::Exceptions::CasTicketValidationError,
+                'Invalid CAS ticket'
+        end
 
         [user_id, affils]
       end
@@ -30,7 +34,7 @@ module Omniauth
         "ticket=#{cas_ticket}"
       end
 
-      def self.validate_ticket(validation_url, cas_ticket)
+      def self.validate(validation_url)
         uri = URI.parse(validation_url)
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = true
@@ -41,10 +45,20 @@ module Omniauth
       end
 
       def self.user_id_from_response_xml(response_xml)
+        unless response_xml.is_a?(Nokogiri::XML::Document)
+          raise ArgumentError,
+                'response_xml must be a Nokogiri::XML::Document'
+        end
+
         response_xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:user', 'cas' => 'http://www.yale.edu/tp/cas')&.first&.text
       end
 
       def self.affils_from_response_xml(response_xml)
+        unless response_xml.is_a?(Nokogiri::XML::Document)
+          raise ArgumentError,
+                'response_xml must be a Nokogiri::XML::Document'
+        end
+
         response_xml.xpath('/cas:serviceResponse/cas:authenticationSuccess/cas:attributes/cas:affiliation', 'cas' => 'http://www.yale.edu/tp/cas')&.map(&:text)
       end
     end
