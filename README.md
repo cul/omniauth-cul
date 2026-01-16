@@ -18,6 +18,7 @@ The instructions below assume that your Rails application's user model will be c
 5. Run `bundle install`.
 6. Add an initializer to your app at `/config/initializers/omniauth.rb` with this content in it (to mitigate [CVE-2015-9284](https://nvd.nist.gov/vuln/detail/CVE-2015-9284)):
    1. ```
+      # Mitigate CVE-2015-9284
       OmniAuth.config.request_validation_phase = OmniAuth::AuthenticityTokenProtection.new(key: :_csrf_token)
       ```
    2. For more info, see [this information from the omniauth-rails_scrf_protection gem](https://github.com/cookpad/omniauth-rails_csrf_protection?tab=readme-ov-file#omniauth---rails-csrf-protection).
