@@ -14,9 +14,13 @@ The instructions below assume that your Rails application's user model will be c
    2. `rails generate devise User`
    3. `rails db:migrate`
 3. Add gem `omniauth` (~> 2.1) to your Gemfile.
-4. Add the gem `omniauth-rails_csrf_protection` to your Gemfile ('~> 2.0').
-5. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
-6. Run `bundle install`.
+4. Add this gem, 'omniauth-cul', to your Gemfile. (This gem has only been tested with omniauth 2.x.)
+5. Run `bundle install`.
+6. Add an initializer to your app at `/config/initializers/omniauth.rb` with this content in it (to mitigate):
+   1. ```
+      OmniAuth.config.request_validation_phase = OmniAuth::AuthenticityTokenProtection.new(key: :_csrf_token)
+      ```
+   2. For more info, see: https://github.com/cookpad/omniauth-rails_csrf_protection?tab=readme-ov-file#omniauth---rails-csrf-protection
 7. This gem offers two Omniauth providers:
    - `:columbia_cas` - For logging in with a Columbia UNI
    - `:developer_uid` - For logging in as a user with a specific uid (IMPORTANT: only enable this in a development environment!)
@@ -28,7 +32,7 @@ The instructions below assume that your Rails application's user model will be c
    ```
    (NOTE: You may already have other config.omniauth entries in your devise.rb file. If so, you can append the lines above to that section.)
 8. Add a :uid column to the User model by running: `rails generate migration AddUidToUsers uid:string:uniq:index`
-9. In `/app/models/user.rb`, find the line where the `devise` method is called.
+9.  In `/app/models/user.rb`, find the line where the `devise` method is called.
    - It might look something like this:
       ```
       devise :database_authenticatable, :validatable
