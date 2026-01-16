@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    omniauth-cul (0.2.0)
+    omniauth-cul (0.3.0)
       devise (>= 4.9)
       omniauth (>= 2.0)
 
